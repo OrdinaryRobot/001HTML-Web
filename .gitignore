@@ -3,6 +3,10 @@ public/
 resources/_gen/
 .hugo_build.lock
 
+# 旧站文件的暂存目录（由 scripts/copy_legacy.sh 或 CI 从仓库根自动生成，
+# 源文件就在仓库根，这里不需要重复提交）
+static/legacy/
+
 # Hugo 缓存
 .hugo_build.lock
 /tmp/

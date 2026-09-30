@@ -40,17 +40,19 @@ hugo new posts/my-first-post.md
 │   ├── about.md           关于我
 │   ├── search.md          搜索页
 │   ├── posts/             博客文章
-│   └── legacy/            旧站归档说明
-├── static/                图片、CSS、JS 等静态资源
+│   └── legacy-guide/      旧站归档说明
+├── static/                静态资源（legacy/ 由脚本自动生成，已忽略）
 ├── themes/PaperMod/       主题（git submodule）
+├── docs/                  文档
 ├── .github/workflows/     GitHub Actions 自动部署
 ├── hugo.toml              站点配置
-└── scripts/               本地辅助脚本
+├── scripts/               本地辅助脚本
+└── 预览博客.bat            双击启动本地预览
 ```
 
 ## 旧站文件怎么处理
 
-把旧的 HTML 与图片直接放到**仓库根目录**即可。每次推送后，部署流程会自动把它们复制到 `/legacy/`。
+把旧的 HTML 与图片直接放到**仓库根目录**即可。构建时 Hugo 会把它们放进网站的 `/legacy/` 下。
 
 | 仓库根的文件 | 线上可访问的地址 |
 |---|---|
@@ -60,13 +62,26 @@ hugo new posts/my-first-post.md
 
 支持的类型：`.html` `.htm` `.webp` `.png` `.jpg` `.jpeg` `.gif` `.svg` `.css` `.js`
 
-本地预览时想看到这些旧文件，可运行：
+### 工作原理
+
+部署与本地预览都遵循**同一条流程**：
+
+```
+仓库根旧站文件  →  复制到 static/legacy/  →  hugo build  →  public/legacy/  →  上线
+```
+
+在 `hugo build` **之前**把文件放进 `static/legacy/`，Hugo 会自动产出到 `public/legacy/`，不需要任何构建后处理。
+
+- **CI**：`.github/workflows/hugo-pages.yml` 的 `Stage legacy static pages` 步骤自动完成复制
+- **本地**：手动跑一次 `bash scripts/copy_legacy.sh`，之后 `hugo server` 就能预览
 
 ```bash
 bash scripts/copy_legacy.sh
+hugo server -D
+# 访问 http://localhost:1313/001HTML-Web/legacy/index.html
 ```
 
-它会把根目录的静态文件复制到 `static/legacy/`，`hugo server` 就能通过 `/legacy/index.html` 访问了。
+> `static/legacy/` 已加入 `.gitignore`——源文件在仓库根，这里是自动生成的暂存目录，不需要提交。
 
 > 归档说明页在 `/legacy-guide/`，与旧站文件的 `/legacy/` 是两个不同路径，不会互相覆盖。
 
@@ -103,6 +118,19 @@ bash scripts/copy_legacy.sh
 
 - 首页：https://ordinaryrobot.github.io/001HTML-Web/
 - 旧站入口：https://ordinaryrobot.github.io/001HTML-Web/legacy/index.html
+
+### 关于 baseURL
+
+站点地址只在两个地方配置，迁移时两处都要改：
+
+| 位置 | 作用 |
+|---|---|
+| `hugo.toml` 的 `baseURL` | 本地构建的默认值 |
+| workflow 的 `env.BASEURL` | CI 构建时通过 `--baseURL` 覆盖 |
+
+CI 不硬编码在命令里，而是从 `env` 读取，这样迁移域名只需改一行。
+
+> 想迁移到根域名 `https://ordinaryrobot.github.io/`？见 [docs/MIGRATION-TO-ROOT-DOMAIN.md](docs/MIGRATION-TO-ROOT-DOMAIN.md)。
 
 ## 提交规范
 

@@ -14,6 +14,11 @@ concurrency:
   group: pages
   cancel-in-progress: true
 
+env:
+  # 站点地址的单一来源在这里。
+  # 迁移到根域名时，只需改这一行（同时改 hugo.toml 的 baseURL）。
+  BASEURL: https://ordinaryrobot.github.io/001HTML-Web/
+
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -30,23 +35,32 @@ jobs:
           hugo-version: "latest"
           extended: true
 
-      - name: Build
-        run: hugo --minify --baseURL "https://ordinaryrobot.github.io/001HTML-Web/"
-
-      - name: Copy legacy static pages
+      # 在 hugo build 之前把仓库根的旧站文件放进 static/legacy。
+      # Hugo 会把它连同 static/ 下的其他内容一起产出到 public/legacy/，
+      # 流程统一由 Hugo 负责，本地 hugo server 也能直接预览。
+      - name: Stage legacy static pages
         run: |
-          mkdir -p public/legacy
-          # 把仓库根的旧站 HTML 与常见图片复制进 public/legacy，保证老页面仍可访问
-          # 注意：这一步在 hugo build 之后执行，旧站文件的 index.html 会覆盖 Hugo 可能生成的同名文件
+          mkdir -p static/legacy
           find . -maxdepth 1 -type f \( \
             -iname "*.html" -o -iname "*.htm" \
             -o -iname "*.webp" -o -iname "*.png" \
             -o -iname "*.jpg" -o -iname "*.jpeg" \
             -o -iname "*.gif" -o -iname "*.svg" \
             -o -iname "*.css" -o -iname "*.js" \
-            \) -exec cp -f {} public/legacy/ \;
-          echo "已复制到 public/legacy 的文件："
-          ls -la public/legacy/
+            \) -exec cp -f {} static/legacy/ \;
+          echo "已暂存到 static/legacy 的旧站文件："
+          ls -la static/legacy/
+
+      - name: Build
+        run: hugo --minify --baseURL "${BASEURL}"
+
+      - name: Verify output
+        run: |
+          echo "构建产物中的 legacy 文件："
+          ls -la public/legacy/ 2>/dev/null || echo "（无旧站文件，属正常）"
+          echo ""
+          echo "站点首页存在性检查："
+          test -f public/index.html && echo "  ✅ public/index.html" || { echo "  ❌ 缺少 public/index.html"; exit 1; }
 
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
