@@ -33,12 +33,8 @@
   // --------------------------------------------------------------------------
   var cloud = null;
   var bannedWords = [];
-  var currentUser = null;
   var allComments = [];
   var isAdmin = false;
-
-  // 管理员邮箱白名单（登录这些邮箱后可以删除任意评论）
-  var ADMIN_EMAILS = [];
 
   // --------------------------------------------------------------------------
   // 3. DOM 工具
@@ -128,18 +124,14 @@
       var c = allComments[i];
       var name = c.owner_name || '匿名访客';
       var initial = name.charAt(0).toUpperCase();
-      var isMine = currentUser && c.owner_id && c.owner_id === currentUser.id;
-      var canDelete = isAdmin || isMine;
 
       html += '<div class="wb-comment">'
         + '<div class="wb-avatar">' + esc(initial) + '</div>'
         + '<div class="wb-comment-body">'
         + '<div class="wb-comment-head">'
         + '<span class="wb-name">' + esc(name) + '</span>'
-        + (isMine && !isAdmin ? '<span class="wb-badge">我</span>' : '')
-        + (isAdmin && !isMine ? '' : '')
         + '<span class="wb-time" title="' + esc(fmtFull(c.created_at)) + '">' + esc(timeAgo(c.created_at)) + '</span>'
-        + (canDelete ? '<button class="wb-del" data-id="' + c.id + '" type="button" title="删除">×</button>' : '')
+        + (isAdmin ? '<button class="wb-del" data-id="' + c.id + '" type="button" title="删除">×</button>' : '')
         + '</div>'
         + '<div class="wb-text">' + esc(c.content).replace(/\n/g, '<br>') + '</div>'
         + '</div>'
@@ -170,16 +162,11 @@
 
   function updateAuthUI() {
     var loginBtn = $('#wb-login-btn');
-    var whoEl = $('#wb-who');
+    var logoutBtn = $('#wb-logout-btn');
     var adminTag = $('#wb-admin-tag');
 
-    if (currentUser) {
-      if (loginBtn) loginBtn.style.display = 'none';
-      if (whoEl) { whoEl.style.display = ''; whoEl.innerHTML = '已登录：<b>' + esc(currentUser.email || '') + '</b>'; }
-    } else {
-      if (loginBtn) loginBtn.style.display = '';
-      if (whoEl) whoEl.style.display = 'none';
-    }
+    if (loginBtn) loginBtn.style.display = isAdmin ? 'none' : '';
+    if (logoutBtn) logoutBtn.style.display = isAdmin ? '' : 'none';
     if (adminTag) adminTag.style.display = isAdmin ? '' : 'none';
   }
 
@@ -277,102 +264,65 @@
 
   function deleteComment(id) {
     if (!window.confirm('确定要删除这条评论吗？该操作不可恢复。')) return;
-    cloud.database.from('comments').delete().eq('id', id).select()
+
+    // 已存过口令则直接用，否则弹窗索要
+    var secret = getSavedSecret();
+    if (!secret) {
+      secret = window.prompt('请输入管理口令（仅站长知道）：');
+      if (!secret) return;
+    }
+
+    deleteViaRpc(secret, id, true);
+  }
+
+  // 通过服务端 RPC 删除（口令在服务端校验，SHA256 比对）
+  function deleteViaRpc(secret, id, allowRetry) {
+    setStatus('正在删除…', '');
+    cloud.database.rpc('admin_delete_comment', { p_secret: secret, p_id: id })
       .then(function (res) {
         if (res.error) throw res.error;
-        var removed = Array.isArray(res.data) ? res.data : [];
-        if (!removed.length) {
-          setStatus('删除失败：评论不存在，或你没有权限删除', 'err');
-          return;
+        // 函数返回 boolean：true = 删除成功
+        if (res.data === true) {
+          saveSecret(secret);
+          setStatus('已删除', 'ok');
+          return loadComments();
         }
-        setStatus('已删除', 'ok');
-        return loadComments();
+        // false = 口令错误
+        clearSecret();
+        setStatus('口令不正确，删除失败', 'err');
+        if (allowRetry) {
+          var retry = window.prompt('口令不正确，请重新输入（留空放弃）：');
+          if (retry) return deleteViaRpc(retry, id, false);
+        }
       })
       .catch(function (err) {
-        setStatus('删除失败：' + ((err && err.message) || '请稍后重试'), 'err');
+        var msg = (err && (err.message || err.details)) || '';
+        if (err && err.code === '42883') {
+          msg = '服务端删除函数未就绪，请稍后重试';
+        }
+        setStatus('删除失败：' + (msg || '请稍后重试'), 'err');
       });
   }
 
+  // 口令存在浏览器本地（只是免去重复输入，真正的校验在服务端）
+  var SECRET_KEY = 'wb_admin_secret';
+  function getSavedSecret() {
+    try { return window.localStorage.getItem(SECRET_KEY) || ''; } catch (e) { return ''; }
+  }
+  function saveSecret(s) {
+    try { window.localStorage.setItem(SECRET_KEY, s); } catch (e) { /* 隐私模式忽略 */ }
+  }
+  function clearSecret() {
+    try { window.localStorage.removeItem(SECRET_KEY); } catch (e) { /* ignore */ }
+  }
+
   // --------------------------------------------------------------------------
-  // 7. 登录（仅管理员用，普通访客无需登录）
+  // 7. 站长模式（口令解锁，用于显示删除按钮）
   // --------------------------------------------------------------------------
-  var pendingOtp = null;
-
-  function sendOtp() {
-    var emailEl = $('#wb-login-email');
-    var btn = $('#wb-send-otp');
-    var email = (emailEl ? emailEl.value : '').trim();
-    if (!email || email.indexOf('@') === -1) { setLoginMsg('请输入有效的邮箱', 'err'); return; }
-
-    if (btn) { btn.disabled = true; }
-    cloud.auth.sendOtp({ email: email }).then(function (r) {
-      if (r.error) { setLoginMsg(r.error.message || '发送失败', 'err'); return; }
-      pendingOtp = {
-        email: email,
-        verificationId: r.data.verificationId,
-        isExistingUser: r.data.isExistingUser
-      };
-      setLoginMsg('验证码已发送到 ' + email + '，请查收（含垃圾箱）', 'ok');
-      var codeWrap = $('#wb-code-wrap');
-      if (codeWrap) codeWrap.style.display = '';
-      var loginEmail = $('#wb-login-email');
-      if (loginEmail) loginEmail.readOnly = true;
-    }).catch(function (e) {
-      setLoginMsg((e && e.message) || '发送失败，请稍后重试', 'err');
-    }).then(function () {
-      if (btn) { btn.disabled = false; }
-    });
-  }
-
-  function verifyOtp() {
-    var codeEl = $('#wb-login-code');
-    var btn = $('#wb-verify');
-    var code = (codeEl ? codeEl.value : '').trim();
-
-    if (!pendingOtp) { setLoginMsg('请先获取验证码', 'err'); return; }
-    if (!code) { setLoginMsg('请输入验证码', 'err'); return; }
-
-    if (btn) { btn.disabled = true; }
-    cloud.auth.verifyOtp({
-      email: pendingOtp.email,
-      verificationId: pendingOtp.verificationId,
-      isExistingUser: pendingOtp.isExistingUser,
-      token: code
-    }).then(function (r) {
-      if (r.error) { setLoginMsg(r.error.message || '验证码错误或已过期', 'err'); return null; }
-      pendingOtp = null;
-      closeLoginDialog();
-      return afterLogin();
-    }).catch(function (e) {
-      setLoginMsg((e && e.message) || '登录失败', 'err');
-    }).then(function () {
-      if (btn) { btn.disabled = false; }
-    });
-  }
-
-  function afterLogin() {
-    return cloud.auth.getSession().then(function (r) {
-      var session = r && r.data;
-      if (!session) { currentUser = null; isAdmin = false; updateAuthUI(); return; }
-      currentUser = { id: session.user && session.user.id, email: session.user && session.user.email };
-      var em = (currentUser.email || '').toLowerCase();
-      isAdmin = ADMIN_EMAILS.length > 0 && ADMIN_EMAILS.indexOf(em) !== -1;
-      updateAuthUI();
-      renderComments();
-      setStatus(isAdmin ? '管理员已登录，可管理所有评论' : '已登录', 'ok');
-    });
-  }
-
-  function logout() {
-    cloud.auth.signOut().then(function () {
-      currentUser = null; isAdmin = false;
-      updateAuthUI(); renderComments();
-      setStatus('已退出登录', 'ok');
-    }).catch(function () {
-      currentUser = null; isAdmin = false;
-      updateAuthUI(); renderComments();
-    });
-  }
+  // 访客完全无需登录。站长点「站长入口」输入口令，验证通过后
+  // 浏览器记住该口令，之后评论旁就会显示删除按钮。
+  // 真正的鉴权在服务端 admin_delete_comment 函数里（SHA256 比对），
+  // 本地存的只是「免重复输入」，泄露也无法绕过服务端校验。
 
   function setLoginMsg(msg, type) {
     var el = $('#wb-login-msg');
@@ -381,21 +331,64 @@
     el.className = 'wb-login-msg' + (type ? ' wb-login-msg--' + type : '');
   }
 
+  // 校验口令：服务端 admin_check_secret 返回 boolean
+  function checkSecret(secret) {
+    return cloud.database.rpc('admin_check_secret', { p_secret: secret })
+      .then(function (res) {
+        if (res.error) throw res.error;
+        return res.data === true;
+      });
+  }
+
+  function unlockAdmin() {
+    var inputEl = $('#wb-secret-input');
+    var btn = $('#wb-verify');
+    var secret = (inputEl ? inputEl.value : '').trim();
+    if (!secret) { setLoginMsg('请输入口令', 'err'); return; }
+
+    if (btn) { btn.disabled = true; btn.textContent = '验证中…'; }
+    checkSecret(secret)
+      .then(function (ok) {
+        if (!ok) { setLoginMsg('口令不正确', 'err'); return; }
+        saveSecret(secret);
+        isAdmin = true;
+        closeLoginDialog();
+        updateAuthUI();
+        renderComments();
+        setStatus('站长模式已开启，评论旁会显示删除按钮', 'ok');
+      })
+      .catch(function (e) {
+        var msg = (e && (e.message || e.details)) || '验证失败，请稍后重试';
+        if (e && e.code === '42883') {
+          msg = '服务端校验函数未就绪，请稍后重试';
+        }
+        setLoginMsg(msg, 'err');
+      })
+      .then(function () {
+        if (btn) { btn.disabled = false; btn.textContent = '解锁'; }
+      });
+  }
+
+  function lockAdmin() {
+    clearSecret();
+    isAdmin = false;
+    updateAuthUI();
+    renderComments();
+    setStatus('已退出站长模式', 'ok');
+  }
+
   function openLoginDialog() {
     var d = $('#wb-login-dialog');
     if (d) d.style.display = 'flex';
     setLoginMsg('');
+    var inputEl = $('#wb-secret-input');
+    if (inputEl) { inputEl.value = ''; inputEl.focus(); }
   }
   function closeLoginDialog() {
     var d = $('#wb-login-dialog');
     if (d) d.style.display = 'none';
-    pendingOtp = null;
-    var codeWrap = $('#wb-code-wrap');
-    if (codeWrap) codeWrap.style.display = 'none';
-    var loginEmail = $('#wb-login-email');
-    if (loginEmail) { loginEmail.readOnly = false; loginEmail.value = ''; }
-    var codeEl = $('#wb-login-code');
-    if (codeEl) codeEl.value = '';
+    var inputEl = $('#wb-secret-input');
+    if (inputEl) inputEl.value = '';
   }
 
   // --------------------------------------------------------------------------
@@ -439,17 +432,13 @@
         setStatus('加载失败：' + ((e && e.message) || '请稍后刷新重试'), 'err');
       });
 
-    // 恢复已有登录态
-    cloud.auth.getSession().then(function (r) {
-      var session = r && r.data;
-      if (session && session.user) {
-        currentUser = { id: session.user.id, email: session.user.email };
-        var em = (currentUser.email || '').toLowerCase();
-        isAdmin = ADMIN_EMAILS.length > 0 && ADMIN_EMAILS.indexOf(em) !== -1;
-      }
-      updateAuthUI();
-      renderComments();
-    }).catch(function () { updateAuthUI(); });
+    // 恢复站长模式：本地存有口令就先乐观开启，
+    // 首次删除时会经过服务端校验，口令失效则自动关闭
+    if (getSavedSecret()) {
+      isAdmin = true;
+    }
+    updateAuthUI();
+    renderComments();
 
     // 绑定事件
     var submitBtn = $('#wb-submit');
@@ -474,13 +463,17 @@
     if (loginBtn) loginBtn.addEventListener('click', openLoginDialog);
 
     var logoutBtn = $('#wb-logout-btn');
-    if (logoutBtn) logoutBtn.addEventListener('click', logout);
-
-    var sendBtn = $('#wb-send-otp');
-    if (sendBtn) sendBtn.addEventListener('click', sendOtp);
+    if (logoutBtn) logoutBtn.addEventListener('click', lockAdmin);
 
     var verifyBtn = $('#wb-verify');
-    if (verifyBtn) verifyBtn.addEventListener('click', verifyOtp);
+    if (verifyBtn) verifyBtn.addEventListener('click', unlockAdmin);
+
+    var secretEl = $('#wb-secret-input');
+    if (secretEl) {
+      secretEl.addEventListener('keydown', function (e) {
+        if (e.key === 'Enter') { e.preventDefault(); unlockAdmin(); }
+      });
+    }
 
     var closeBtn = $('#wb-login-close');
     if (closeBtn) closeBtn.addEventListener('click', closeLoginDialog);

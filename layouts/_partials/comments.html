@@ -11,10 +11,9 @@
       评论 <span>(<span id="wb-comment-count">0</span>)</span>
     </h2>
     <div class="wb-auth">
-      <span class="wb-admin-tag" id="wb-admin-tag" style="display:none;">管理员</span>
-      <span id="wb-who" style="display:none;"></span>
-      <button class="wb-btn wb-btn--ghost" id="wb-login-btn" type="button">管理员登录</button>
-      <button class="wb-btn wb-btn--ghost" id="wb-logout-btn" type="button" style="display:none;">退出</button>
+      <span class="wb-admin-tag" id="wb-admin-tag" style="display:none;">站长</span>
+      <button class="wb-btn wb-btn--ghost" id="wb-login-btn" type="button">站长入口</button>
+      <button class="wb-btn wb-btn--ghost" id="wb-logout-btn" type="button" style="display:none;">退出站长</button>
     </div>
   </div>
 
@@ -37,25 +36,21 @@
 
 </section>
 
-{{- /* ---------- 登录弹窗（仅管理员使用） ---------- */ -}}
+{{- /* ---------- 站长口令弹窗 ---------- */ -}}
 <div class="wb-dialog-mask" id="wb-login-dialog">
   <div class="wb-dialog">
     <h3 class="wb-dialog-title">
-      管理员登录
+      站长入口
       <button class="wb-dialog-close" id="wb-login-close" type="button">&times;</button>
     </h3>
     <p class="wb-dialog-hint">
-      普通访客无需登录即可评论。此处仅供站长管理评论使用。
+      普通访客无需登录即可评论。此处仅供站长输入口令后管理评论。
     </p>
-    <input class="wb-input" id="wb-login-email" type="email"
-           placeholder="管理员邮箱" autocomplete="email">
-    <div id="wb-code-wrap" style="display:none;">
-      <input class="wb-input" id="wb-login-code" type="text" inputmode="numeric"
-             placeholder="6 位验证码" autocomplete="one-time-code">
-    </div>
-    <div class="wb-meta" style="margin-top:4px;">
-      <button class="wb-btn wb-btn--ghost" id="wb-send-otp" type="button">获取验证码</button>
-      <button class="wb-btn" id="wb-verify" type="button">登录</button>
+    <input class="wb-input" id="wb-secret-input" type="password"
+           placeholder="请输入站长口令" autocomplete="current-password">
+    <div class="wb-meta" style="margin-top:10px;">
+      <span></span>
+      <button class="wb-btn" id="wb-verify" type="button">解锁</button>
     </div>
     <div class="wb-login-msg" id="wb-login-msg"></div>
   </div>
