@@ -22,7 +22,7 @@ enableEmoji = true
   ShowRssButtonInSectionTermList = true
   ShowToc = true
   TocOpen = false
-  comments = false
+  comments = true
   DateFormat = "2006-01-02"
 
   [params.homeInfoParams]

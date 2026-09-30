@@ -1,0 +1,35 @@
+/* ============================================================================
+ * 正文链接样式增强
+ * PaperMod 默认正文链接与普通文字区分度低，这里显式加下划线 + 主题色
+ * ==========================================================================*/
+
+.post-content a,
+.wb-comments a {
+  color: #3b82f6;
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 2px;
+  transition: color 0.15s, text-decoration-color 0.15s;
+}
+
+.post-content a:hover,
+.wb-comments a:hover {
+  color: #2563eb;
+  text-decoration-thickness: 2px;
+}
+
+/* 暗色主题下提亮，保证对比度 */
+[data-theme="dark"] .post-content a,
+[data-theme="dark"] .wb-comments a {
+  color: #60a5fa;
+}
+
+[data-theme="dark"] .post-content a:hover,
+[data-theme="dark"] .wb-comments a:hover {
+  color: #93c5fd;
+}
+
+/* 列表里的链接稍微加粗，更醒目 */
+.post-content li a {
+  font-weight: 500;
+}

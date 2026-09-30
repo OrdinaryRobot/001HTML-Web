@@ -1,0 +1,65 @@
+{{- /* ==========================================================================
+       评论系统 —— 覆盖 PaperMod 主题的 comments.html
+       数据存储在 WorkBuddy 云服务数据库，逻辑见 static/js/comments.js
+       ========================================================================== */ -}}
+
+{{- if not .Site.Params.disableComments -}}
+<section class="wb-comments" id="wb-comments">
+
+  <div class="wb-head">
+    <h2 class="wb-title">
+      评论 <span>(<span id="wb-comment-count">0</span>)</span>
+    </h2>
+    <div class="wb-auth">
+      <span class="wb-admin-tag" id="wb-admin-tag" style="display:none;">管理员</span>
+      <span id="wb-who" style="display:none;"></span>
+      <button class="wb-btn wb-btn--ghost" id="wb-login-btn" type="button">管理员登录</button>
+      <button class="wb-btn wb-btn--ghost" id="wb-logout-btn" type="button" style="display:none;">退出</button>
+    </div>
+  </div>
+
+  <div class="wb-form">
+    <div class="wb-row">
+      <input class="wb-input" id="wb-name-input" type="text" maxlength="30"
+             placeholder="你的昵称（可留空，默认「匿名访客」）" autocomplete="nickname">
+    </div>
+    <textarea class="wb-input" id="wb-text-input" maxlength="2000"
+              placeholder="说点什么吧……（Ctrl + Enter 快速发布）"></textarea>
+    <div class="wb-meta">
+      <span class="wb-len" id="wb-len">0 / 2000</span>
+      <button class="wb-btn" id="wb-submit" type="button">发表评论</button>
+    </div>
+  </div>
+
+  <div class="wb-status" id="wb-status"></div>
+
+  <div class="wb-list" id="wb-comment-list"></div>
+
+</section>
+
+{{- /* ---------- 登录弹窗（仅管理员使用） ---------- */ -}}
+<div class="wb-dialog-mask" id="wb-login-dialog">
+  <div class="wb-dialog">
+    <h3 class="wb-dialog-title">
+      管理员登录
+      <button class="wb-dialog-close" id="wb-login-close" type="button">&times;</button>
+    </h3>
+    <p class="wb-dialog-hint">
+      普通访客无需登录即可评论。此处仅供站长管理评论使用。
+    </p>
+    <input class="wb-input" id="wb-login-email" type="email"
+           placeholder="管理员邮箱" autocomplete="email">
+    <div id="wb-code-wrap" style="display:none;">
+      <input class="wb-input" id="wb-login-code" type="text" inputmode="numeric"
+             placeholder="6 位验证码" autocomplete="one-time-code">
+    </div>
+    <div class="wb-meta" style="margin-top:4px;">
+      <button class="wb-btn wb-btn--ghost" id="wb-send-otp" type="button">获取验证码</button>
+      <button class="wb-btn" id="wb-verify" type="button">登录</button>
+    </div>
+    <div class="wb-login-msg" id="wb-login-msg"></div>
+  </div>
+</div>
+
+<script src="{{ "js/comments.js" | relURL }}" defer></script>
+{{- end -}}
