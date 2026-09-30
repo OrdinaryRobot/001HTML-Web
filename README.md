@@ -2,8 +2,11 @@
 
 这个仓库原本是一个用于检验 Web 网页设计课程学习成果的测试站点，现已加入 **Hugo + PaperMod** 博客结构。原有 HTML 页面和图片文件暂时保留。
 
-- 站点地址：https://ordinaryrobot.github.io/001HTML-Web/
-- 仓库地址：https://github.com/OrdinaryRobot/001HTML-Web
+- **站点地址**：https://ordinaryrobot.github.io/001HTML-Web/
+- **仓库地址**：https://github.com/OrdinaryRobot/001HTML-Web
+
+> **关于访问地址**：本仓库是 **项目站点**（Project Site），地址带仓库名路径 `/001HTML-Web/`。
+> 如果想用根域名 `https://ordinaryrobot.github.io/`，需要把仓库改名为 `OrdinaryRobot.github.io`（GitHub 用户站点的命名规则）。两者不能同时成立，当前选择保留 `001HTML-Web` 这个仓库名。
 
 ## 本地运行
 
@@ -49,7 +52,13 @@ hugo new posts/my-first-post.md
 
 把旧的 HTML 与图片直接放到**仓库根目录**即可。每次推送后，部署流程会自动把它们复制到 `/legacy/`。
 
-例如：根目录的 `index.html` → 线上访问 `/legacy/index.html`。
+| 仓库根的文件 | 线上可访问的地址 |
+|---|---|
+| `index.html` | `/legacy/index.html` |
+| `Section001.html` | `/legacy/Section001.html` |
+| `photo.webp` | `/legacy/photo.webp` |
+
+支持的类型：`.html` `.htm` `.webp` `.png` `.jpg` `.jpeg` `.gif` `.svg` `.css` `.js`
 
 本地预览时想看到这些旧文件，可运行：
 
@@ -57,7 +66,9 @@ hugo new posts/my-first-post.md
 bash scripts/copy_legacy.sh
 ```
 
-它会把根目录的静态文件复制到 `static/legacy/`，`hugo server` 就能直接访问了。
+它会把根目录的静态文件复制到 `static/legacy/`，`hugo server` 就能通过 `/legacy/index.html` 访问了。
+
+> 归档说明页在 `/legacy-guide/`，与旧站文件的 `/legacy/` 是两个不同路径，不会互相覆盖。
 
 ## 搜索与评论
 
@@ -84,7 +95,14 @@ bash scripts/copy_legacy.sh
 
 ## 部署
 
-推送到 `master` 分支即自动部署到 GitHub Pages。首次需在仓库 **Settings → Pages → Source** 选择 **GitHub Actions**。
+推送到 `master` 分支即自动部署到 GitHub Pages。
+
+**首次部署前必须做一步**：在仓库 **Settings → Pages → Source** 选择 **GitHub Actions**，否则 workflow 跑完也不会发布。
+
+部署后的地址：
+
+- 首页：https://ordinaryrobot.github.io/001HTML-Web/
+- 旧站入口：https://ordinaryrobot.github.io/001HTML-Web/legacy/index.html
 
 ## 提交规范
 

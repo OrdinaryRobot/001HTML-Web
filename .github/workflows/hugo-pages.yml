@@ -37,7 +37,16 @@ jobs:
         run: |
           mkdir -p public/legacy
           # 把仓库根的旧站 HTML 与常见图片复制进 public/legacy，保证老页面仍可访问
-          find . -maxdepth 1 -type f \( -iname "*.html" -o -iname "*.htm" -o -iname "*.webp" -o -iname "*.png" -o -iname "*.jpg" -o -iname "*.jpeg" \) -exec cp {} public/legacy/ \; || true
+          # 注意：这一步在 hugo build 之后执行，旧站文件的 index.html 会覆盖 Hugo 可能生成的同名文件
+          find . -maxdepth 1 -type f \( \
+            -iname "*.html" -o -iname "*.htm" \
+            -o -iname "*.webp" -o -iname "*.png" \
+            -o -iname "*.jpg" -o -iname "*.jpeg" \
+            -o -iname "*.gif" -o -iname "*.svg" \
+            -o -iname "*.css" -o -iname "*.js" \
+            \) -exec cp -f {} public/legacy/ \;
+          echo "已复制到 public/legacy 的文件："
+          ls -la public/legacy/
 
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3

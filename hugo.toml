@@ -55,7 +55,7 @@ enableEmoji = true
   [[menu.main]]
     identifier = "legacy"
     name = "旧站练习页"
-    url = "/legacy/"
+    url = "/legacy/index.html"
     weight = 40
 
 [markup]
