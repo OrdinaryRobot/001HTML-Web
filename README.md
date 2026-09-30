@@ -1,0 +1,100 @@
+# OrdinaryRobot 的 Hugo 个人博客
+
+这个仓库原本是一个用于检验 Web 网页设计课程学习成果的测试站点，现已加入 **Hugo + PaperMod** 博客结构。原有 HTML 页面和图片文件暂时保留。
+
+- 站点地址：https://ordinaryrobot.github.io/001HTML-Web/
+- 仓库地址：https://github.com/OrdinaryRobot/001HTML-Web
+
+## 本地运行
+
+首次克隆后，初始化 PaperMod 子模块：
+
+```bash
+git clone https://github.com/OrdinaryRobot/001HTML-Web.git
+cd 001HTML-Web
+git submodule update --init --recursive
+hugo server -D
+```
+
+浏览器打开 http://localhost:1313/ 即可预览。
+
+> 需要 **Hugo Extended** 版（PaperMod 依赖 SCSS 编译）。查看版本：`hugo version`，输出中应含 `extended`。
+
+## 写文章
+
+```bash
+hugo new posts/my-first-post.md
+```
+
+编辑 `content/posts/my-first-post.md`，确认 `draft: false` 后提交并推送到 `master`，GitHub Actions 会自动构建和部署。
+
+## 目录结构
+
+```
+.
+├── content/
+│   ├── _index.md          首页
+│   ├── about.md           关于我
+│   ├── search.md          搜索页
+│   ├── posts/             博客文章
+│   └── legacy/            旧站归档说明
+├── static/                图片、CSS、JS 等静态资源
+├── themes/PaperMod/       主题（git submodule）
+├── .github/workflows/     GitHub Actions 自动部署
+├── hugo.toml              站点配置
+└── scripts/               本地辅助脚本
+```
+
+## 旧站文件怎么处理
+
+把旧的 HTML 与图片直接放到**仓库根目录**即可。每次推送后，部署流程会自动把它们复制到 `/legacy/`。
+
+例如：根目录的 `index.html` → 线上访问 `/legacy/index.html`。
+
+本地预览时想看到这些旧文件，可运行：
+
+```bash
+bash scripts/copy_legacy.sh
+```
+
+它会把根目录的静态文件复制到 `static/legacy/`，`hugo server` 就能直接访问了。
+
+## 搜索与评论
+
+**搜索**已通过 PaperMod 的 JSON 输出接入（`hugo.toml` 里 `outputs.home` 含 `JSON`），使用 Fuse.js 做客户端模糊匹配，无需后端。
+
+**评论**建议使用 Giscus：支持 GitHub Discussions、登录后评论和表情反应。启用步骤：
+
+1. 在仓库 **Settings → General → Features** 中开启 **Discussions**
+2. 安装 [Giscus App](https://github.com/apps/giscus) 并授权本仓库
+3. 到 [giscus.app](https://giscus.app/) 获取 `repo_id` 和 `category_id`
+4. 在 `hugo.toml` 的 `[params]` 中加入：
+
+```toml
+[params.giscus]
+  repo = "OrdinaryRobot/001HTML-Web"
+  repoId = "你的 repo_id"
+  category = "Announcements"
+  categoryId = "你的 category_id"
+  mapping = "pathname"
+  lang = "zh-CN"
+```
+
+> 注意：Giscus 使用 GitHub Markdown，因此无法仅靠主题配置强制限制为「仅文字和表情」。若必须限制内容格式，需要更严格的自定义评论后端。
+
+## 部署
+
+推送到 `master` 分支即自动部署到 GitHub Pages。首次需在仓库 **Settings → Pages → Source** 选择 **GitHub Actions**。
+
+## 提交规范
+
+本项目遵循 Conventional Commits：
+
+```
+feat(search): 接入 Fuse.js 本地搜索
+fix(nav): 移动端菜单遮挡内容
+docs: 补充本地运行说明
+chore(deps): 升级 Hugo 版本
+```
+
+可用 type：`feat` `fix` `docs` `style` `refactor` `perf` `test` `build` `ci` `chore` `revert`

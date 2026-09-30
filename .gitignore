@@ -1,0 +1,35 @@
+# 构建产物（不需要提交）
+public/
+resources/_gen/
+.hugo_build.lock
+
+# Hugo 缓存
+.hugo_build.lock
+/tmp/
+
+# 操作系统
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# 编辑器
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# 环境变量与密钥（切勿提交）
+.env
+.env.*
+*.pem
+*.key
+credentials.json
+
+# Node（若后续引入）
+node_modules/
+npm-debug.log*
+yarn-error.log*
+
+# 旧站图片若放根目录，可按需放行；默认不忽略
+# !*.html

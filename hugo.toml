@@ -1,0 +1,72 @@
+baseURL = "https://ordinaryrobot.github.io/001HTML-Web/"
+languageCode = "zh-cn"
+defaultContentLanguage = "zh-cn"
+title = "OrdinaryRobot 的个人博客"
+theme = "PaperMod"
+enableRobotsTXT = true
+enableEmoji = true
+
+[pagination]
+  pagerSize = 10
+
+[params]
+  env = "production"
+  author = "OrdinaryRobot"
+  description = "记录学习、网页设计与个人成长。"
+  defaultTheme = "auto"
+  ShowReadingTime = true
+  ShowShareButtons = false
+  ShowPostNavLinks = true
+  ShowBreadCrumbs = true
+  ShowCodeCopyButtons = true
+  ShowRssButtonInSectionTermList = true
+  ShowToc = true
+  TocOpen = false
+  comments = false
+  DateFormat = "2006-01-02"
+
+  [params.homeInfoParams]
+    Title = "你好，我是 OrdinaryRobot 👋"
+    Content = "这里记录我的网页设计学习、实践项目和个人思考。你也可以访问旧的练习页面。"
+
+  [[params.socialIcons]]
+    name = "github"
+    url = "https://github.com/OrdinaryRobot"
+
+[outputs]
+  home = ["HTML", "RSS", "JSON"]
+
+[menu]
+  [[menu.main]]
+    identifier = "posts"
+    name = "文章"
+    url = "/posts/"
+    weight = 10
+  [[menu.main]]
+    identifier = "search"
+    name = "搜索"
+    url = "/search/"
+    weight = 20
+  [[menu.main]]
+    identifier = "about"
+    name = "关于我"
+    url = "/about/"
+    weight = 30
+  [[menu.main]]
+    identifier = "legacy"
+    name = "旧站练习页"
+    url = "/legacy/"
+    weight = 40
+
+[markup]
+  [markup.highlight]
+    noClasses = false
+    lineNos = false
+    codeFences = true
+    guessSyntax = true
+  [markup.goldmark.renderer]
+    unsafe = true
+
+[taxonomies]
+  tag = "tags"
+  category = "categories"
