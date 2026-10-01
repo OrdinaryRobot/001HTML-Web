@@ -1,0 +1,5 @@
+# 写作后台不对搜索引擎开放（入口也没有对外链接）
+# 注：项目站点位于子路径下，此处按实际路径书写
+User-agent: *
+Disallow: /001HTML-Web/admin/
+Allow: /
