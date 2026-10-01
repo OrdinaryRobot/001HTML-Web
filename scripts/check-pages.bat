@@ -1,6 +1,9 @@
 @echo off
 chcp 65001 >nul
-cd /d "D:\WorkBuddy\001HTML-Web"
+
+REM Repo root = parent folder of this script
+for %%I in ("%~dp0..") do set "SITE_DIR=%%~fI"
+cd /d "%SITE_DIR%"
 
 echo ===================================================
 echo   Checking GitHub Pages Deployment Status
@@ -19,7 +22,7 @@ echo.
 echo.
 
 echo [3/3] Site Reachability
-for %%U in ("https://ordinaryrobot.github.io/001HTML-Web/" "https://ordinaryrobot.github.io/001HTML-Web/legacy/index.html" "https://ordinaryrobot.github.io/001HTML-Web/about/") do (
+for %%U in ("https://ordinaryrobot.github.io/001HTML-Web/" "https://ordinaryrobot.github.io/001HTML-Web/legacy/index.html" "https://ordinaryrobot.github.io/001HTML-Web/about/" "https://ordinaryrobot.github.io/001HTML-Web/posts/welcome/") do (
   for /f %%C in ('curl -s -o NUL -w "%%{http_code}" --noproxy "*" --connect-timeout 20 %%U') do (
     echo   HTTP %%C  %%U
   )
