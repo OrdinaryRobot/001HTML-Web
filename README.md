@@ -8,6 +8,10 @@
 > **关于访问地址**：本仓库是 **项目站点**（Project Site），地址带仓库名路径 `/001HTML-Web/`。
 > 如果想用根域名 `https://ordinaryrobot.github.io/`，需要把仓库改名为 `OrdinaryRobot.github.io`（GitHub 用户站点的命名规则）。两者不能同时成立，当前选择保留 `001HTML-Web` 这个仓库名。
 
+##特别呜谢
+
+感谢Github Copilot和WorkBuddy,我主要通过它们的协作建立了该仓库
+
 ## 本地运行
 
 首次克隆后，初始化 PaperMod 子模块：
