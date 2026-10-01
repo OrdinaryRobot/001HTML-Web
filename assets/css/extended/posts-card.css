@@ -1,0 +1,180 @@
+/* ============================================================================
+ * 卡片式文章列表 —— 仅作用于 /posts/（模板里已限定 .Section == "posts"）
+ * 仿信息流结构：头像 + 昵称 + 相对时间 / 标题 + 右侧缩略图 / 阅读·评论数
+ * 颜色全部走 PaperMod 的主题变量，自动适配亮色与暗色
+ * ==========================================================================*/
+
+.post-cards {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    margin: 4px 0 28px;
+}
+
+.post-card {
+    position: relative;
+    padding: 16px 18px;
+    background: var(--entry);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    transition: border-color .18s ease, box-shadow .18s ease, transform .18s ease;
+}
+
+.post-card:hover {
+    border-color: var(--tertiary);
+    box-shadow: 0 4px 18px rgba(0, 0, 0, .06);
+    transform: translateY(-1px);
+}
+
+[data-theme="dark"] .post-card:hover {
+    box-shadow: 0 4px 18px rgba(0, 0, 0, .35);
+}
+
+/* ---------- 顶部：头像 + 昵称 / 时间 ---------- */
+
+.pc-head {
+    display: flex;
+    align-items: center;
+    gap: 11px;
+}
+
+.pc-avatar {
+    flex: none;
+    width: 42px;
+    height: 42px;
+    border-radius: 50%;
+    object-fit: cover;
+    background: var(--code-bg);
+}
+
+.pc-avatar-fallback {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+    font-weight: 600;
+    color: var(--secondary);
+    background: var(--tertiary);
+    text-transform: uppercase;
+}
+
+.pc-who {
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+    min-width: 0;
+}
+
+.pc-nick {
+    font-size: 15px;
+    font-weight: 600;
+    line-height: 1.35;
+    color: var(--primary);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.pc-time {
+    font-size: 12.5px;
+    line-height: 1.35;
+    color: var(--secondary);
+}
+
+/* ---------- 中部：标题 + 缩略图 ---------- */
+
+.pc-body {
+    display: flex;
+    align-items: flex-start;
+    gap: 14px;
+    margin-top: 13px;
+}
+
+.pc-title {
+    flex: 1 1 auto;
+    min-width: 0;
+    margin: 0;
+    font-size: 19px;
+    font-weight: 600;
+    line-height: 1.45;
+    color: var(--primary);
+    overflow-wrap: anywhere;
+}
+
+.pc-body.no-thumb .pc-title {
+    flex-basis: 100%;
+}
+
+.pc-thumb {
+    flex: none;
+    width: 128px;
+    height: 86px;
+    border-radius: 10px;
+    overflow: hidden;
+    background: var(--code-bg);
+}
+
+.pc-thumb img {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+/* ---------- 底部：阅读 / 评论 ---------- */
+
+.pc-foot {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    margin-top: 14px;
+    font-size: 12.5px;
+    color: var(--secondary);
+}
+
+.pc-stat b {
+    font-weight: 600;
+    color: var(--secondary);
+}
+
+.pc-sep {
+    opacity: .6;
+}
+
+/* ---------- 整张卡片可点 ---------- */
+
+.pc-link {
+    position: absolute;
+    inset: 0;
+    border-radius: 14px;
+    z-index: 1;
+}
+
+/* ---------- 窄屏适配 ---------- */
+
+@media (max-width: 560px) {
+    .post-card {
+        padding: 14px 15px;
+        border-radius: 12px;
+    }
+
+    .pc-avatar {
+        width: 38px;
+        height: 38px;
+    }
+
+    .pc-title {
+        font-size: 16.5px;
+    }
+
+    .pc-thumb {
+        width: 92px;
+        height: 64px;
+        border-radius: 8px;
+    }
+
+    .pc-body {
+        gap: 11px;
+        margin-top: 11px;
+    }
+}

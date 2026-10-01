@@ -29,6 +29,15 @@ enableEmoji = true
     Title = "你好，我是 OrdinaryRobot 👋"
     Content = "这里记录我的网页设计学习、实践项目和个人思考。你也可以访问旧的练习页面。"
 
+  # 卡片式文章列表的作者信息（头像留空则显示昵称首字母的圆形占位）
+  [params.cardAuthor]
+    name = "X000000X931"
+    avatar = ""
+
+  # 阅读数 / 评论数统计后端（stats.html 桥接页；留空则卡片只显示占位符）
+  [params.cardStats]
+    api = "https://blog-comments.app.workbuddy.host/stats.html"
+
   [[params.socialIcons]]
     name = "github"
     url = "https://github.com/OrdinaryRobot"
