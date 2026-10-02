@@ -1,0 +1,99 @@
+{{- /* ==========================================================================
+       评论系统 —— 云服务 iframe 嵌入版（Stack 自定义 provider）
+       --------------------------------------------------------------------------
+       为什么不用现成 provider（Disqus / Giscus / Waline…）：
+       我们自己那套评论系统跑在 WorkBuddy 云服务上，功能更贴合需求 ——
+       免登录、敏感词过滤、昵称锁定、站长口令删除。
+
+       为什么必须用 iframe 而不是直接 fetch：
+       云服务的 data-plane API 会校验请求 Origin 白名单，只放行应用自己的域名
+       （blog-comments.app.workbuddy.host）。博客在 GitHub Pages 上，Origin
+       不在白名单，浏览器直连会被 403 拒绝。把控件放进 iframe 后，请求就是从
+       白名单域名发出的，即可正常读写。
+
+       通信约定：
+         · 父页面 → iframe：下发主题（light / dark）
+         · iframe → 父页面：上报内容高度，实现无内部滚动条的自适应
+       ========================================================================== */ -}}
+
+{{- $frameOrigin := "https://blog-comments.app.workbuddy.host" -}}
+{{- $frameSrc := printf "%s/?page=%s" $frameOrigin (.RelPermalink | urlquery) -}}
+
+<section class="wb-comments-embed" id="wb-comments">
+  <iframe
+    id="wb-comments-frame"
+    class="wb-comments-frame"
+    src="{{ $frameSrc }}"
+    title="评论区"
+    loading="lazy"
+    scrolling="no"
+    referrerpolicy="no-referrer-when-downgrade"
+    style="width:100%;border:0;height:420px;display:block;"
+  ></iframe>
+</section>
+
+<script>
+(function () {
+  'use strict';
+
+  var FRAME_ORIGIN = "{{ $frameOrigin }}";
+  var frame = document.getElementById('wb-comments-frame');
+  if (!frame) return;
+
+  // ---------- 1. 高度自适应 ----------
+  window.addEventListener('message', function (e) {
+    if (e.origin !== FRAME_ORIGIN) return;
+    var d = e.data;
+    if (!d || d.type !== 'wb-comments:height') return;
+    var h = parseInt(d.height, 10);
+    if (!h || h < 0 || h > 20000) return;
+    frame.style.height = h + 'px';
+  });
+
+  // ---------- 2. 主题同步 ----------
+  // 注意：Stack 用 <html data-scheme="light|dark">，不是 PaperMod 的 data-theme。
+  function currentTheme() {
+    var t = document.documentElement.getAttribute('data-scheme');
+    if (t === 'dark') return 'dark';
+    if (t === 'light') return 'light';
+    return (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) ? 'dark' : 'light';
+  }
+
+  function pushTheme() {
+    if (!frame.contentWindow) return;
+    try {
+      frame.contentWindow.postMessage(
+        { type: 'wb-comments:theme', theme: currentTheme() },
+        FRAME_ORIGIN
+      );
+    } catch (err) { /* 忽略 */ }
+  }
+
+  frame.addEventListener('load', pushTheme);
+
+  if (window.MutationObserver) {
+    new MutationObserver(pushTheme).observe(document.documentElement, {
+      attributes: true,
+      attributeFilter: ['data-scheme']
+    });
+  }
+  // 兜底：切换主题的方式若发生变化，定期补发一次
+  setInterval(pushTheme, 1500);
+})();
+</script>
+
+<style>
+  .wb-comments-embed {
+    margin-top: 44px;
+    padding-top: 26px;
+    border-top: 1px solid var(--card-separator-color, rgba(128, 128, 128, 0.28));
+  }
+  .wb-comments-frame {
+    width: 100%;
+    border: 0;
+    display: block;
+    background: transparent;
+    color-scheme: light dark;
+    transition: height 0.15s ease-out;
+  }
+</style>

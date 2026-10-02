@@ -1,0 +1,42 @@
+/* ============================================================================
+ * 项目自定义样式
+ * ----------------------------------------------------------------------------
+ * Stack 主题的 style.scss 里有 @import "custom.scss"，项目根目录下的同名文件
+ * 会覆盖主题里的占位版本，所以这里写的东西会自动被打包进最终样式。
+ *
+ * 内容：文章卡片底部的「N 阅读 · N 评论」数据行
+ *       （DOM 由 layouts/_partials/footer/custom.html 运行时注入）
+ * ========================================================================== */
+
+.article-details .wb-card-stats {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 7px;
+    margin-top: 12px;
+    font-size: 1.3rem;
+    line-height: 1.5;
+    color: var(--card-text-color-tertiary);
+}
+
+.article-details .wb-card-stats .wb-stat {
+    display: inline-flex;
+    align-items: baseline;
+    gap: 3px;
+}
+
+.article-details .wb-card-stats .wb-stat b {
+    font-weight: 600;
+    color: var(--card-text-color-secondary);
+    /* 数字等宽，避免异步填充时宽度跳动 */
+    font-variant-numeric: tabular-nums;
+}
+
+.article-details .wb-card-stats .wb-sep {
+    opacity: 0.5;
+}
+
+/* 已显示数据行时，给卡片元信息区留一点呼吸感 */
+.article-details .article-meta + .wb-card-stats {
+    margin-top: 10px;
+}

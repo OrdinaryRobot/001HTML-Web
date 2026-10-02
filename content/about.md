@@ -1,8 +1,7 @@
 ---
 title: "关于我"
 description: "OrdinaryRobot 的个人介绍"
-ShowToc: false
-ShowReadingTime: false
+toc: false
 ---
 
 你好，我是 **OrdinaryRobot**。
@@ -14,6 +13,15 @@ ShowReadingTime: false
 ## 我在用什么
 
 - **静态站点生成器**：Hugo
-- **主题**：PaperMod
+- **主题**：[Hugo Theme Stack](https://github.com/CaiJimmy/hugo-theme-stack)
 - **托管**：GitHub Pages
 - **部署**：GitHub Actions（推送 `master` 自动构建）
+
+## 站内导航
+
+- **文章** —— 查看所有博文
+- **搜索** —— 全站内容检索
+- **归档** —— 按时间浏览全部文章
+- **旧站练习页** —— 课程练习阶段的静态页面存档
+
+> 侧边栏里也可以直接进入上述页面。

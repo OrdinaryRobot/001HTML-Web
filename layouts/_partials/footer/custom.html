@@ -1,0 +1,137 @@
+{{- /* ==========================================================================
+       列表页增强 —— 相对时间 + 阅读数 / 评论数
+       --------------------------------------------------------------------------
+       这个文件覆盖了 Stack 主题里同名的一个空钩子文件，主题的
+       footer/include.html 会调用它，所以内容会出现在每个页面的底部。
+
+       为什么用 JS 注入而不是改卡片模板：
+         主题的卡片 partial（article-list/default、article-list/compact …）
+         是好几个文件，直接覆盖它们等于把主题代码抄一份进项目，
+         以后升级主题会冲突。这里改成运行时抓取卡片、按链接批量查数据、
+         再插回 DOM —— 一套代码同时覆盖首页、文章列表、分类页、标签页。
+
+       数据来源：云数据库的 post_stats() 聚合函数（一次请求查完本页所有文章）。
+       因为云服务校验 Origin 白名单，博客域名不能直连，所以走隐藏 iframe 桥接。
+       ========================================================================== */ -}}
+
+{{- with site.Params.cardStats.api }}
+<script>
+(function () {
+  'use strict';
+
+  // 必须用 safeJS：jsonify 已产出带引号的字符串字面量，
+  // 若不再标记为安全，HTML 模板会二次转义成 "\"...\""，导致 URL 解析失败。
+  var API = {{ . | jsonify | safeJS }};
+
+  /* ---------- 1. 收集本页所有文章卡片 ---------- */
+  function collect(sel) {
+    var out = [];
+    var nodes = document.querySelectorAll(sel);
+    for (var i = 0; i < nodes.length; i++) {
+      var el = nodes[i];
+      // 优先取标题上的链接。
+      // 注意：不能直接取卡片里第一个 <a> —— Stack 的卡片开头是「分类标签」，
+      // 那也是链接，取错了就会指向 /categories/xxx/ 而不是文章。
+      var a = el.querySelector('.article-title a[href]') || el.querySelector('a[href]');
+      if (!a) continue;
+      var path = a.pathname;
+      // 只认文章链接，跳过目录/分类/标签卡片
+      if (!path || path.indexOf('/posts/') === -1) continue;
+      out.push({ el: el, path: path });
+    }
+    return out;
+  }
+
+  var cards = collect('.article-list > article')
+    .concat(collect('.article-list--compact > article'));
+
+  if (!cards.length) return;
+
+  /* ---------- 2. 绝对日期 → 相对时间 ---------- */
+  function relTime(iso) {
+    var t = new Date(iso).getTime();
+    if (isNaN(t)) return null;
+    var d = Date.now() - t;
+    if (d < 0) d = 0;
+    var MIN = 60000, HOUR = 60 * MIN, DAY = 24 * HOUR;
+    if (d < MIN) return '刚刚';
+    if (d < HOUR) return Math.floor(d / MIN) + ' 分钟前';
+    if (d < DAY) return Math.floor(d / HOUR) + ' 小时前';
+    if (d < 30 * DAY) return Math.floor(d / DAY) + ' 天前';
+    if (d < 365 * DAY) return Math.floor(d / (30 * DAY)) + ' 个月前';
+    return Math.floor(d / (365 * DAY)) + ' 年前';
+  }
+
+  for (var i = 0; i < cards.length; i++) {
+    var timeEl = cards[i].el.querySelector('time[datetime]');
+    if (!timeEl) continue;
+    var rel = relTime(timeEl.getAttribute('datetime'));
+    if (!rel) continue;
+    timeEl.setAttribute('title', timeEl.textContent.trim());
+    timeEl.textContent = rel;
+  }
+
+  /* ---------- 3. 通过 iframe 桥接取阅读数 / 评论数 ---------- */
+  var apiOrigin;
+  try { apiOrigin = new URL(API, location.href).origin; } catch (e) { return; }
+
+  function render(card, views, comments) {
+    var box = card.querySelector('.article-details');
+    if (!box || box.querySelector('.wb-card-stats')) return;
+    var row = document.createElement('div');
+    row.className = 'wb-card-stats';
+
+    var s1 = document.createElement('span');
+    s1.className = 'wb-stat';
+    var b1 = document.createElement('b');
+    b1.textContent = views;
+    s1.appendChild(b1);
+    s1.appendChild(document.createTextNode(' 阅读'));
+
+    var sep = document.createElement('span');
+    sep.className = 'wb-sep';
+    sep.textContent = '·';
+
+    var s2 = document.createElement('span');
+    s2.className = 'wb-stat';
+    var b2 = document.createElement('b');
+    b2.textContent = comments;
+    s2.appendChild(b2);
+    s2.appendChild(document.createTextNode(' 评论'));
+
+    row.appendChild(s1);
+    row.appendChild(sep);
+    row.appendChild(s2);
+    box.appendChild(row);
+  }
+
+  /* 先挂监听器，再创建 iframe —— 否则桥接页可能先于监听器就绪 */
+  window.addEventListener('message', function (e) {
+    if (e.origin !== apiOrigin) return;
+    var d = e.data;
+    if (!d || d.type !== 'wb-stats') return;
+    var stats = d.data || {};
+    for (var k = 0; k < cards.length; k++) {
+      var rec = stats[cards[k].path];
+      if (!rec) continue;
+      render(cards[k].el,
+        typeof rec.views === 'number' ? rec.views : 0,
+        typeof rec.comments === 'number' ? rec.comments : 0);
+    }
+  }, false);
+
+  var paths = [];
+  for (var j = 0; j < cards.length; j++) {
+    if (paths.indexOf(cards[j].path) === -1) paths.push(cards[j].path);
+  }
+
+  var frame = document.createElement('iframe');
+  frame.setAttribute('aria-hidden', 'true');
+  frame.setAttribute('title', 'stats');
+  frame.setAttribute('scrolling', 'no');
+  frame.style.cssText = 'position:absolute;left:-9999px;width:1px;height:1px;border:0;opacity:0;pointer-events:none;';
+  frame.src = API + '?paths=' + encodeURIComponent(paths.join('|'));
+  document.body.appendChild(frame);
+})();
+</script>
+{{- end }}

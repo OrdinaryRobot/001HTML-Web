@@ -2,9 +2,7 @@
 title: "旧站练习页"
 description: "课程练习阶段的静态页面存档说明"
 url: "/legacy-guide/"
-ShowToc: false
-ShowReadingTime: false
-ShowBreadCrumbs: false
+toc: false
 ---
 
 这里存放博客改版前的课程练习页面。**旧站文件本身位于 `/legacy/` 路径下。**

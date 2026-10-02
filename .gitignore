@@ -11,6 +11,9 @@ static/legacy/
 .hugo_build.lock
 /tmp/
 
+# Hugo 处理 JS 时自动生成的 IDE 辅助文件（内容是路径映射，会随主题变化而过时）
+assets/jsconfig.json
+
 # 操作系统
 .DS_Store
 Thumbs.db

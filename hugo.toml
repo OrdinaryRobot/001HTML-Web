@@ -1,71 +1,137 @@
+# ============================================================================
+#  站点配置 —— Hugo Theme Stack
+#  ---------------------------------------------------------------------------
+#  2026-10-02 由 PaperMod 迁移而来。
+#  原有功能全部保留：
+#    · 评论系统（iframe 桥接到云服务域名，绕过 Origin 白名单限制）
+#    · 阅读数 / 评论数统计（云数据库 page_view_logs + post_stats）
+#    · 写作后台 /admin/（GitHub Contents API 直写仓库）
+#    · robots.txt 屏蔽 /admin/
+#    · 搜索页、关于页、旧站练习页导航
+# ============================================================================
+
 baseURL = "https://ordinaryrobot.github.io/001HTML-Web/"
-languageCode = "zh-cn"
-defaultContentLanguage = "zh-cn"
 title = "OrdinaryRobot 的个人博客"
-theme = "PaperMod"
+theme = "stack"
+
+defaultContentLanguage = "zh"
+locale = "zh-cn"
+hasCJKLanguage = true
+
 enableRobotsTXT = true
 enableEmoji = true
+
+# 注：不需要在站点级配置 [outputs]。
+# Stack 的搜索索引来自搜索页自身（content/search.md 里声明 outputs: html + json），
+# 用的是主题的 layouts/page/search.json 模板。
+
+[taxonomies]
+  tag = "tags"
+  category = "categories"
 
 [pagination]
   pagerSize = 10
 
+# 注意：刻意不配置 [permalinks]。
+# Stack 示例配置用 "/posts/:slug/"，但文章没写 slug 时 Hugo 会拿「标题」当路径，
+# 导致 URL 变成中文（/posts/欢迎来到我的博客/），现有链接全部失效。
+# 用 Hugo 默认行为即 /posts/<文件名>/，与迁移前完全一致。
+
 [params]
-  env = "production"
-  author = "OrdinaryRobot"
-  description = "记录学习、网页设计与个人成长。"
-  defaultTheme = "auto"
-  ShowReadingTime = true
-  ShowShareButtons = false
-  ShowPostNavLinks = true
-  ShowBreadCrumbs = true
-  ShowCodeCopyButtons = true
-  ShowRssButtonInSectionTermList = true
-  ShowToc = true
-  TocOpen = false
-  comments = true
-  DateFormat = "2006-01-02"
+  mainSections = ["posts"]
+  rssFullContent = true
 
-  [params.homeInfoParams]
-    Title = "你好，我是 OrdinaryRobot 👋"
-    Content = "这里记录我的网页设计学习、实践项目和个人思考。你也可以访问旧的练习页面。"
+  # ---------- 站点图标 ----------
+  # 主题的 head 模板会把它渲染成 <link rel="icon">，
+  # 顺便避免浏览器去请求不存在的 /favicon.ico
+  favicon = "img/avatar.jpg"
 
-  # 卡片式文章列表的作者信息（头像留空则显示昵称首字母的圆形占位）
-  [params.cardAuthor]
-    name = "X000000X931"
-    avatar = ""
+  # ---------- 左侧作者卡片 ----------
+  [params.sidebar]
+    emoji = ""
+    subtitle = "记录网页设计学习与实践"
+    avatar = "img/avatar.jpg"
+    compact = false
 
-  # 阅读数 / 评论数统计后端（stats.html 桥接页；留空则卡片只显示占位符）
+  # ---------- 页脚 ----------
+  [params.footer]
+    since = 2026
+
+  # ---------- 文章 ----------
+  [params.article]
+    readingTime = true
+    toc = true
+    headingAnchor = false
+
+    [params.article.list]
+      showTags = true
+
+    [params.article.license]
+      enabled = false
+
+  # ---------- 右侧组件 ----------
+  [params.widgets]
+    homepage = [
+      { type = "search" },
+      { type = "archives", params = { limit = 5 } },
+      { type = "categories", params = { limit = 10 } },
+      { type = "tag-cloud", params = { limit = 20 } },
+    ]
+    page = [{ type = "toc" }]
+
+  # ---------- 亮 / 暗主题 ----------
+  [params.colorScheme]
+    toggle = true
+    default = "auto"
+
+  # ---------- 评论系统 ----------
+  # provider = "wbcloud" 对应 layouts/_partials/comments/provider/wbcloud.html
+  # 那是把评论控件用 iframe 嵌进来的自定义 provider，原因见该文件注释。
+  [params.comments]
+    enabled = true
+    provider = "wbcloud"
+
+  # ---------- 阅读数 / 评论数统计后端 ----------
+  # 由 layouts/_partials/footer/custom.html 读取并注入卡片
   [params.cardStats]
     api = "https://blog-comments.app.workbuddy.host/stats.html"
 
-  [[params.socialIcons]]
-    name = "github"
-    url = "https://github.com/OrdinaryRobot"
-
-[outputs]
-  home = ["HTML", "RSS", "JSON"]
-
+# ---------- 导航菜单（渲染在左侧边栏）----------
 [menu]
   [[menu.main]]
     identifier = "posts"
     name = "文章"
     url = "/posts/"
     weight = 10
+    params = { icon = "archives" }
+
   [[menu.main]]
     identifier = "search"
     name = "搜索"
     url = "/search/"
     weight = 20
+    params = { icon = "search" }
+
   [[menu.main]]
     identifier = "about"
     name = "关于我"
     url = "/about/"
     weight = 30
+    params = { icon = "user" }
+
   [[menu.main]]
     identifier = "legacy"
     name = "旧站练习页"
     url = "/legacy/index.html"
     weight = 40
+    params = { icon = "link" }
+
+  [[menu.social]]
+    identifier = "github"
+    name = "GitHub"
+    url = "https://github.com/OrdinaryRobot"
+    weight = 10
+    params = { icon = "brand-github" }
 
 [markup]
   [markup.highlight]
@@ -75,7 +141,3 @@ enableEmoji = true
     guessSyntax = true
   [markup.goldmark.renderer]
     unsafe = true
-
-[taxonomies]
-  tag = "tags"
-  category = "categories"
