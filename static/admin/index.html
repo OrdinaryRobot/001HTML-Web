@@ -630,6 +630,25 @@ input:focus, textarea:focus { border-color: var(--accent); }
     });
   }
 
+  // 行首 4 个及以上空格会被 Markdown 当作「缩进代码块」，整段渲染成 <pre>（永不换行），
+  // 在手机上就是正文横向溢出、右侧被裁。这里在保存/预览前清理普通文本行的行首缩进。
+  // 代码围栏（``` / ~~~）内的内容、以及列表 / 引用 / 标题 / 表格 / HTML 等结构行一律原样保留。
+  function normalizeBody(text) {
+    var out = [], inFence = false, cleaned = 0;
+    String(text || '').split('\n').forEach(function (raw) {
+      var line = raw.replace(/\s+$/, '');
+      if (/^\s*(```|~~~)/.test(line)) { inFence = !inFence; out.push(line); return; }
+      if (inFence) { out.push(line); return; }
+      if (!line.trim()) { out.push(''); return; }
+      var rest = line.replace(/^\s+/, '');
+      if (rest === line) { out.push(line); return; }
+      if (/^([-*+>#|]|\d+[.)]\s|<)/.test(rest)) { out.push(line); return; }
+      out.push(rest);
+      cleaned++;
+    });
+    return { text: out.join('\n'), cleaned: cleaned };
+  }
+
   function buildContent() {
     var title = $('f-title').value.trim() || '无标题';
     var tags = $('f-tags').value.split(/[,，]/)
@@ -638,13 +657,16 @@ input:focus, textarea:focus { border-color: var(--accent); }
     var iso = dtVal ? (dtVal + ':00' + tzOffset(new Date(dtVal))) : toIso(new Date());
     var draft = $('f-draft').checked;
 
+    var nb = normalizeBody($('f-body').value);
+    S.autoCleaned = nb.cleaned;
+
     var lines = ['---'];
     lines.push('title: ' + JSON.stringify(title));
     lines.push('date: ' + iso);
     lines.push('draft: ' + (draft ? 'true' : 'false'));
     if (tags.length) lines.push('tags: [' + tags.map(function (t) { return JSON.stringify(t); }).join(', ') + ']');
     lines.push('---', '');
-    lines.push($('f-body').value.replace(/\s+$/, '') + '\n');
+    lines.push(nb.text + '\n');
     return lines.join('\n');
   }
 
@@ -693,7 +715,8 @@ input:focus, textarea:focus { border-color: var(--accent); }
           S.cur = { path: path, sha: (d && d.content && d.content.sha) || null, isNew: false };
           $('btn-delete').hidden = false;
           setDirty(false);
-          toast(isDraft ? '已存为草稿（不会出现在站点上）' : '发布成功！约 1 分钟后自动上线', 'ok', 4200);
+          toast((isDraft ? '已存为草稿（不会出现在站点上）' : '发布成功！约 1 分钟后自动上线') +
+            (S.autoCleaned ? '（已自动清理 ' + S.autoCleaned + ' 行行首空格）' : ''), 'ok', 4600);
           loadPosts();
         });
     };
@@ -899,7 +922,7 @@ input:focus, textarea:focus { border-color: var(--accent); }
 
   function openPreview() {
     $('preview-title').textContent = $('f-title').value || '预览';
-    $('preview-body').innerHTML = mdRender($('f-body').value || '');
+    $('preview-body').innerHTML = mdRender(normalizeBody($('f-body').value || '').text);
     $('preview-mask').hidden = false;
   }
 
