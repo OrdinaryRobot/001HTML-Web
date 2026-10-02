@@ -46,3 +46,6 @@ push.bat
 
 # 本地改动前的原文件留档（不入库）
 .backup/
+
+# 已弃用的旧主题：换用 stack 后不再需要，磁盘上保留副本但不入库
+/themes/PaperMod/
