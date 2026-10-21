@@ -42,9 +42,12 @@ enableEmoji = true
   rssFullContent = true
 
   # ---------- 站点图标 ----------
-  # 主题的 head 模板会把它渲染成 <link rel="icon">，
-  # 顺便避免浏览器去请求不存在的 /favicon.ico
-  favicon = "img/avatar.jpg"
+  # 2026-10-21 起改由 layouts/_partials/head/custom.html 统一输出：
+  #   static/favicon.ico + favicon-16/32.png + apple-touch-icon.png + site.webmanifest
+  # 原因：主题的 params.favicon 只能输出单张图片（原先用的 avatar.jpg），
+  #       jpg 格式在浏览器标签页、Windows 桌面快捷方式、iOS 主屏上都不被识别。
+  # 换图标直接替换 static/ 下的同名文件，不用动这里。
+  # favicon = "img/avatar.jpg"
 
   # ---------- 左侧作者卡片 ----------
   [params.sidebar]
