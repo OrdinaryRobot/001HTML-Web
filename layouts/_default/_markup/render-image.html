@@ -1,0 +1,10 @@
+{{- /*
+  图片渲染钩子：把以 "/" 开头的绝对路径自动拼接 baseURL 子路径。
+  站点部署在 /001HTML-Web/ 下，Markdown 里写 ![](/images/x.png) 才不会 404；
+  将来迁到根域名只需改 hugo.toml 的 baseURL，正文一个字都不用动。
+*/ -}}
+{{- $dest := .Destination -}}
+{{- if hasPrefix $dest "/" -}}
+  {{- $dest = relURL (strings.TrimPrefix "/" $dest) -}}
+{{- end -}}
+<img src="{{ $dest | safeURL }}" alt="{{ .Text }}" {{ with .Title }}title="{{ . }}" {{ end }}loading="lazy" decoding="async">
