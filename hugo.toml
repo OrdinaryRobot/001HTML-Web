@@ -52,7 +52,9 @@ enableEmoji = true
   # ---------- 左侧作者卡片 ----------
   [params.sidebar]
     emoji = ""
-    subtitle = "记录网页设计学习与实践"
+    # 注意：TOML 双引号字符串里反斜杠是转义符，写 "\（" 会报错，
+    # 所以 "\\" 双写才表示一个真正的反斜杠字符。
+    subtitle = "有没有人找我打乒乓球啊  !!!! \\（TwT）/"
     avatar = "img/avatar.jpg"
     compact = false
 
