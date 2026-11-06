@@ -7,3 +7,5 @@ tags: ["音乐"]
 
 王菲声音怎么这么美这么仙啊，一晚上给我整的要飞升了![6804ecbe263b82bc322d1f9702c54b87](https://ordinaryrobot.github.io/001HTML-Web/images/uploads/20261107-001407-6804ecbe263b82bc322d1f9702c54b.jpg)
 
+![Screenshot_20261029_230241](https://ordinaryrobot.github.io/001HTML-Web/images/uploads/20261107-001643-screenshot-20261029-230241.jpg)
+
